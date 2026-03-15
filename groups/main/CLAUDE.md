@@ -57,7 +57,9 @@ Keep messages clean and readable for WhatsApp.
 
 ## Projects
 
-Your project files live at `/workspace/extra/TARS/` in the container, which maps to `~/TARS/` on the user's Mac. The user can open these files in Finder or any editor.
+**IMPORTANT: ALL project directories MUST be created under `/workspace/extra/TARS/`. Never create project directories anywhere else (not in `/workspace/group/`, not in `~/`, nowhere else).**
+
+Project files live at `/workspace/extra/TARS/` in the container, which maps to `~/TARS/` on the user's Mac. The user opens them in Finder or their editor from there.
 
 To **create a new project**:
 ```bash
