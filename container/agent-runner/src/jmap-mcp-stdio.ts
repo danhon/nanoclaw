@@ -1,15 +1,22 @@
 /**
  * JMAP MCP Server for NanoClaw
- * Provides read-only access to Fastmail via the JMAP API.
- * Credentials are passed via FASTMAIL_API_TOKEN environment variable.
+ * Provides read-only access to Fastmail via the JMAP proxy running on the host.
+ * The host proxy (src/jmap-proxy.ts) injects the Fastmail API token.
+ * Connect via JMAP_PROXY_URL env var (e.g. http://host.docker.internal:3002).
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-const API_TOKEN = process.env.FASTMAIL_API_TOKEN || '';
-const JMAP_SESSION_URL = 'https://api.fastmail.com/.well-known/jmap';
+// Host-side JMAP proxy — no token needed here, proxy injects it
+const JMAP_PROXY_BASE = (process.env.JMAP_PROXY_URL || '').replace(/\/$/, '');
+const JMAP_SESSION_URL = JMAP_PROXY_BASE
+  ? `${JMAP_PROXY_BASE}/session`
+  : 'https://api.fastmail.com/.well-known/jmap';
+
+// Fallback: if no proxy, use direct API token (local dev without containers)
+const API_TOKEN = JMAP_PROXY_BASE ? '' : (process.env.FASTMAIL_API_TOKEN || '');
 
 function log(msg: string): void {
   console.error(`[JMAP] ${msg}`);
@@ -56,15 +63,24 @@ interface EmailBody {
 
 let cachedSession: JmapSession | null = null;
 
+function makeAuthHeaders(): Record<string, string> {
+  // When using proxy: no auth header needed (proxy injects it)
+  // When using direct (local dev): inject Bearer token
+  if (API_TOKEN) {
+    return { Authorization: `Bearer ${API_TOKEN}` };
+  }
+  return {};
+}
+
 async function getSession(): Promise<JmapSession> {
   if (cachedSession) return cachedSession;
 
-  if (!API_TOKEN) {
-    throw new Error('FASTMAIL_API_TOKEN is not set');
+  if (!JMAP_PROXY_BASE && !API_TOKEN) {
+    throw new Error('JMAP_PROXY_URL or FASTMAIL_API_TOKEN must be set');
   }
 
   const res = await fetch(JMAP_SESSION_URL, {
-    headers: { Authorization: `Bearer ${API_TOKEN}` },
+    headers: makeAuthHeaders(),
   });
 
   if (!res.ok) {
@@ -94,7 +110,7 @@ async function jmapCall(methodCalls: Array<[string, Record<string, unknown>, str
   const res = await fetch(session.apiUrl, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${API_TOKEN}`,
+      ...makeAuthHeaders(),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -319,8 +335,10 @@ server.tool(
   },
 );
 
-if (!API_TOKEN) {
-  log('WARNING: FASTMAIL_API_TOKEN is not set — JMAP tools will fail');
+if (!JMAP_PROXY_BASE && !API_TOKEN) {
+  log('WARNING: JMAP_PROXY_URL is not set — JMAP tools will fail');
+} else if (JMAP_PROXY_BASE) {
+  log(`Using JMAP proxy at ${JMAP_PROXY_BASE}`);
 }
 
 const transport = new StdioServerTransport();

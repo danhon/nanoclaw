@@ -11,6 +11,7 @@ import {
   CONTAINER_MAX_OUTPUT_SIZE,
   CONTAINER_TIMEOUT,
   CREDENTIAL_PROXY_PORT,
+  JMAP_PROXY_PORT,
   DATA_DIR,
   GROUPS_DIR,
   IDLE_TIMEOUT,
@@ -30,8 +31,7 @@ import { readEnvFile } from './env.js';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
-// Optional secrets passed into containers for MCP servers
-const containerSecrets = readEnvFile(['FASTMAIL_API_TOKEN']);
+// No longer passing FASTMAIL_API_TOKEN into containers — JMAP proxy handles auth on host
 
 // Sentinel markers for robust output parsing (must match agent-runner)
 const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
@@ -242,10 +242,11 @@ function buildContainerArgs(
     args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
   }
 
-  // Optional secrets for MCP servers inside the container
-  if (containerSecrets.FASTMAIL_API_TOKEN) {
-    args.push('-e', `FASTMAIL_API_TOKEN=${containerSecrets.FASTMAIL_API_TOKEN}`);
-  }
+  // Point JMAP MCP server to the host-side proxy (containers can't reach api.fastmail.com directly)
+  args.push(
+    '-e',
+    `JMAP_PROXY_URL=http://${CONTAINER_HOST_GATEWAY}:${JMAP_PROXY_PORT}`,
+  );
 
   // Runtime-specific args for host gateway resolution
   args.push(...hostGatewayArgs());

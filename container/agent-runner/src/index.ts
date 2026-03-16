@@ -433,7 +433,8 @@ async function runQuery(
           command: 'node',
           args: [path.join(path.dirname(mcpServerPath), 'jmap-mcp-stdio.js')],
           env: {
-            FASTMAIL_API_TOKEN: process.env.FASTMAIL_API_TOKEN || '',
+            // JMAP_PROXY_URL is injected by container-runner.ts; proxy handles auth on host
+            JMAP_PROXY_URL: process.env.JMAP_PROXY_URL || '',
           },
         },
       },
