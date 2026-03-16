@@ -70,3 +70,13 @@ To create a new project:
 ```bash
 mkdir -p /workspace/extra/TARS/project-name
 ```
+
+## Conversation Summaries
+
+After any conversation involving a project, save a summary to the project directory so the context is available from any channel:
+
+```
+/workspace/extra/TARS/<project>/conversations/<YYYY-MM-DD>-<channel>.md
+```
+
+Include: key decisions, agreed actions (who/what/when), open questions, and enough context to continue from another channel. Save automatically at the end of a project conversation, or when asked to "save a summary" or "remember this".
