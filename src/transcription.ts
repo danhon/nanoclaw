@@ -11,7 +11,8 @@ const WHISPER_MODEL =
   process.env.WHISPER_MODEL ||
   path.join(process.cwd(), 'data', 'models', 'ggml-base.bin');
 
-export const TRANSCRIPTION_UNAVAILABLE = '[Voice Message - transcription unavailable]';
+export const TRANSCRIPTION_UNAVAILABLE =
+  '[Voice Message - transcription unavailable]';
 
 /**
  * Transcribe an audio buffer using local whisper.cpp.
@@ -47,7 +48,11 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
     return TRANSCRIPTION_UNAVAILABLE;
   } finally {
     for (const f of [tmpIn, tmpWav]) {
-      try { fs.unlinkSync(f); } catch { /* best effort */ }
+      try {
+        fs.unlinkSync(f);
+      } catch {
+        /* best effort */
+      }
     }
   }
 }

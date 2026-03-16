@@ -20,7 +20,10 @@ import {
 } from '../config.js';
 import { getLastGroupSync, setLastGroupSync, updateChatName } from '../db.js';
 import { logger } from '../logger.js';
-import { transcribeAudio, TRANSCRIPTION_UNAVAILABLE } from '../transcription.js';
+import {
+  transcribeAudio,
+  TRANSCRIPTION_UNAVAILABLE,
+} from '../transcription.js';
 import {
   Channel,
   OnInboundMessage,
@@ -232,13 +235,17 @@ export class WhatsAppChannel implements Channel {
                 msg,
                 'buffer',
                 {},
-                { logger: console as any, reuploadRequest: this.sock.updateMediaMessage },
+                {
+                  logger: console as any,
+                  reuploadRequest: this.sock.updateMediaMessage,
+                },
               )) as Buffer;
               if (buffer?.length) {
                 const transcript = await transcribeAudio(buffer);
-                finalContent = transcript === TRANSCRIPTION_UNAVAILABLE
-                  ? TRANSCRIPTION_UNAVAILABLE
-                  : `[Voice: ${transcript}]`;
+                finalContent =
+                  transcript === TRANSCRIPTION_UNAVAILABLE
+                    ? TRANSCRIPTION_UNAVAILABLE
+                    : `[Voice: ${transcript}]`;
                 logger.info(
                   { chatJid, length: transcript.length },
                   'Transcribed voice message',

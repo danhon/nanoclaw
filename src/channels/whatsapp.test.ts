@@ -545,7 +545,9 @@ describe('WhatsAppChannel', () => {
     });
 
     it('falls back when transcription returns null', async () => {
-      vi.mocked(transcribeAudio).mockResolvedValueOnce('[Voice Message - transcription unavailable]');
+      vi.mocked(transcribeAudio).mockResolvedValueOnce(
+        '[Voice Message - transcription unavailable]',
+      );
 
       const opts = createTestOpts();
       const channel = new WhatsAppChannel(opts);

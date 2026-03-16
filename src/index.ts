@@ -486,7 +486,10 @@ async function main(): Promise<void> {
   );
 
   // Start JMAP proxy (containers reach Fastmail through this, no direct outbound needed)
-  const jmapProxyServer = await startJmapProxy(JMAP_PROXY_PORT, PROXY_BIND_HOST);
+  const jmapProxyServer = await startJmapProxy(
+    JMAP_PROXY_PORT,
+    PROXY_BIND_HOST,
+  );
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
