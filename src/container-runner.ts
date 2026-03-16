@@ -26,8 +26,12 @@ import {
   stopContainer,
 } from './container-runtime.js';
 import { detectAuthMode } from './credential-proxy.js';
+import { readEnvFile } from './env.js';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
+
+// Optional secrets passed into containers for MCP servers
+const containerSecrets = readEnvFile(['FASTMAIL_API_TOKEN']);
 
 // Sentinel markers for robust output parsing (must match agent-runner)
 const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
@@ -236,6 +240,11 @@ function buildContainerArgs(
     args.push('-e', 'ANTHROPIC_API_KEY=placeholder');
   } else {
     args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
+  }
+
+  // Optional secrets for MCP servers inside the container
+  if (containerSecrets.FASTMAIL_API_TOKEN) {
+    args.push('-e', `FASTMAIL_API_TOKEN=${containerSecrets.FASTMAIL_API_TOKEN}`);
   }
 
   // Runtime-specific args for host gateway resolution

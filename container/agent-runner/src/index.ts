@@ -408,7 +408,8 @@ async function runQuery(
         'TodoWrite', 'ToolSearch', 'Skill',
         'NotebookEdit',
         'mcp__nanoclaw__*',
-        'mcp__ollama__*'
+        'mcp__ollama__*',
+        'mcp__jmap__*'
       ],
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
@@ -427,6 +428,13 @@ async function runQuery(
         ollama: {
           command: 'node',
           args: [path.join(path.dirname(mcpServerPath), 'ollama-mcp-stdio.js')],
+        },
+        jmap: {
+          command: 'node',
+          args: [path.join(path.dirname(mcpServerPath), 'jmap-mcp-stdio.js')],
+          env: {
+            FASTMAIL_API_TOKEN: process.env.FASTMAIL_API_TOKEN || '',
+          },
         },
       },
       hooks: {
