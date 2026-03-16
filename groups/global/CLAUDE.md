@@ -49,10 +49,27 @@ When you learn something important:
 
 ## Message Formatting
 
-NEVER use markdown. Only use WhatsApp/Telegram formatting:
-- *single asterisks* for bold (NEVER **double asterisks**)
-- _underscores_ for italic
-- • bullet points
-- ```triple backticks``` for code
+Adapt formatting to the channel:
 
-No ## headings. No [links](url). No **double stars**.
+- **WhatsApp / Telegram**: No markdown. Use *single asterisks* for bold, _underscores_ for italic, • for bullets. No ## headings, no [links](url), no **double asterisks**.
+- **Slack / Discord**: Standard Markdown is fine. Use **bold**, _italic_, bullet lists, headings if helpful.
+
+When in doubt, keep it plain and readable.
+
+## Projects
+
+Your projects are stored at `/workspace/extra/TARS/`. Each project is a subdirectory there. This maps to `~/TARS/` on the user's Mac — files are immediately visible in Finder.
+
+**Always check `/workspace/extra/TARS/` first** when the user asks about ongoing work, tasks, or projects.
+
+To list projects:
+```bash
+ls /workspace/extra/TARS/
+```
+
+To create a new project:
+```bash
+mkdir -p /workspace/extra/TARS/project-name
+```
+
+To work on a project, read and write files under `/workspace/extra/TARS/project-name/`.
