@@ -12,6 +12,8 @@ vi.mock('./config.js', () => ({
   CONTAINER_MAX_OUTPUT_SIZE: 10485760,
   CONTAINER_TIMEOUT: 1800000, // 30min
   CREDENTIAL_PROXY_PORT: 3001,
+  JMAP_PROXY_PORT: 3002,
+  TRANSCRIPTION_PROXY_PORT: 3003,
   DATA_DIR: '/tmp/nanoclaw-test-data',
   GROUPS_DIR: '/tmp/nanoclaw-test-groups',
   IDLE_TIMEOUT: 1800000, // 30min
@@ -49,6 +51,7 @@ vi.mock('fs', async () => {
 // Mock mount-security
 vi.mock('./mount-security.js', () => ({
   validateAdditionalMounts: vi.fn(() => []),
+  loadMountAllowlist: vi.fn(() => null),
 }));
 
 // Create a controllable fake ChildProcess
