@@ -13,6 +13,7 @@ import {
   CONTAINER_TIMEOUT,
   CREDENTIAL_PROXY_PORT,
   JMAP_PROXY_PORT,
+  TRANSCRIPTION_PROXY_PORT,
   DATA_DIR,
   GROUPS_DIR,
   IDLE_TIMEOUT,
@@ -270,6 +271,12 @@ function buildContainerArgs(
   args.push(
     '-e',
     `JMAP_PROXY_URL=http://${CONTAINER_HOST_GATEWAY}:${JMAP_PROXY_PORT}`,
+  );
+
+  // Point to host-side transcription proxy (whisper-cli/ffmpeg live on host, not in container)
+  args.push(
+    '-e',
+    `TRANSCRIPTION_PROXY_URL=http://${CONTAINER_HOST_GATEWAY}:${TRANSCRIPTION_PROXY_PORT}`,
   );
 
   // Runtime-specific args for host gateway resolution

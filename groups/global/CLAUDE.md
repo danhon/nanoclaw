@@ -18,6 +18,15 @@ Your output is sent to the user or group.
 
 You also have `mcp__nanoclaw__send_message` which sends a message immediately while you're still working. This is useful when you want to acknowledge a request before starting longer work.
 
+### REQUIRED: Label every message with [Claude] or [Ollama]
+
+**Every message you send to the user — including via `send_message` and your final reply — must begin with `[Claude]` or `[Ollama]`.**
+
+- `[Claude]` — you answered directly
+- `[Ollama]` — you used `ollama_generate` for the core content
+
+This applies to ALL outbound messages: acknowledgements, status updates, partial results, and final answers. No exceptions. The label must be the very first thing in the message.
+
 ### Internal thoughts
 
 If part of your output is internal reasoning rather than something for the user, wrap it in `<internal>` tags:
@@ -46,6 +55,19 @@ When you learn something important:
 - Create files for structured data (e.g., `customers.md`, `preferences.md`)
 - Split files larger than 500 lines into folders
 - Keep an index in your memory for the files you create
+
+## Transcribing Audio
+
+To transcribe an audio file (any format: m4a, ogg, mp3, wav, etc.), POST it to the host transcription proxy — do NOT try to run whisper-cli or ffmpeg directly (they are not in the container):
+
+```bash
+curl -s -X POST "$TRANSCRIPTION_PROXY_URL/transcribe" \
+  --data-binary @/path/to/audio.m4a \
+  -H "Content-Type: application/octet-stream" \
+  | jq -r '.transcript'
+```
+
+The response is JSON: `{"transcript": "..."}`. If transcription fails, it returns `[Voice Message - transcription unavailable]`.
 
 ## Local AI with Ollama
 
@@ -81,15 +103,6 @@ You have access to local Ollama models via `ollama_list_models` and `ollama_gene
 Call `ollama_generate` with the model and a clear prompt. If unsure which models are available, call `ollama_list_models` first (once per session is enough).
 
 Example thought process: *User asks me to summarize a pasted article → use `ollama_generate` with `deepseek-r1:8b`, then send the result.*
-
-### Always declare which AI answered
-
-**Every reply must start with `[Ollama]` or `[Claude]`** depending on who generated the main answer.
-
-- `[Ollama]` — you used `ollama_generate` for the core response
-- `[Claude]` — you answered directly without delegating
-
-No exceptions. Put it as the very first token of your response, before anything else.
 
 ## Message Formatting
 

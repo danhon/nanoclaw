@@ -5,6 +5,7 @@ import {
   ASSISTANT_NAME,
   CREDENTIAL_PROXY_PORT,
   JMAP_PROXY_PORT,
+  TRANSCRIPTION_PROXY_PORT,
   IDLE_TIMEOUT,
   POLL_INTERVAL,
   TIMEZONE,
@@ -12,6 +13,7 @@ import {
 } from './config.js';
 import { startCredentialProxy } from './credential-proxy.js';
 import { startJmapProxy } from './jmap-proxy.js';
+import { startTranscriptionProxy } from './transcription-proxy.js';
 import './channels/index.js';
 import {
   getChannelFactory,
@@ -491,11 +493,18 @@ async function main(): Promise<void> {
     PROXY_BIND_HOST,
   );
 
+  // Start transcription proxy (containers POST audio bytes here, host runs whisper.cpp)
+  const transcriptionProxyServer = await startTranscriptionProxy(
+    TRANSCRIPTION_PROXY_PORT,
+    PROXY_BIND_HOST,
+  );
+
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutdown signal received');
     proxyServer.close();
     jmapProxyServer.close();
+    transcriptionProxyServer.close();
     await queue.shutdown(10000);
     for (const ch of channels) await ch.disconnect();
     process.exit(0);
