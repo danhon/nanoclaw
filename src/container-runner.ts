@@ -4,6 +4,7 @@
  */
 import { ChildProcess, exec, spawn } from 'child_process';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import {
@@ -28,7 +29,7 @@ import {
 } from './container-runtime.js';
 import { detectAuthMode } from './credential-proxy.js';
 import { readEnvFile } from './env.js';
-import { validateAdditionalMounts } from './mount-security.js';
+import { loadMountAllowlist, validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
 // No longer passing FASTMAIL_API_TOKEN into containers — JMAP proxy handles auth on host
@@ -211,6 +212,26 @@ function buildVolumeMounts(
       isMain,
     );
     mounts.push(...validatedMounts);
+  }
+
+  // Auto-mount all allowlist roots into every group so user-configured
+  // directories (e.g. ~/TARS) are available across all channels without
+  // needing per-group database config.
+  const allowlist = loadMountAllowlist();
+  if (allowlist) {
+    const homeDir = process.env.HOME || os.homedir();
+    for (const root of allowlist.allowedRoots) {
+      const expandedPath = root.path.startsWith('~/')
+        ? path.join(homeDir, root.path.slice(2))
+        : path.resolve(root.path);
+      if (!fs.existsSync(expandedPath)) continue;
+      const containerPath = `/workspace/extra/${path.basename(expandedPath)}`;
+      // Skip if already mounted (e.g. via group's additionalMounts)
+      if (mounts.some((m) => m.containerPath === containerPath)) continue;
+      const readonly =
+        !root.allowReadWrite || (!isMain && allowlist.nonMainReadOnly);
+      mounts.push({ hostPath: expandedPath, containerPath, readonly });
+    }
   }
 
   return mounts;
