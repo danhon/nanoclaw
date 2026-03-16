@@ -58,18 +58,15 @@ When in doubt, keep it plain and readable.
 
 ## Projects
 
-Your projects are stored at `/workspace/extra/TARS/`. Each project is a subdirectory there. This maps to `~/TARS/` on the user's Mac — files are immediately visible in Finder.
+Your projects are stored at `/workspace/extra/TARS/`. Each project is a subdirectory there. This maps to `~/TARS/` on the user's Mac.
 
-**Always check `/workspace/extra/TARS/` first** when the user asks about ongoing work, tasks, or projects.
-
-To list projects:
+**NEVER say you don't have information about a project or ongoing work without first running:**
 ```bash
 ls /workspace/extra/TARS/
 ```
+Then read the relevant files. The user's work is saved there and shared across all channels. Checking the filesystem is mandatory before claiming ignorance.
 
 To create a new project:
 ```bash
 mkdir -p /workspace/extra/TARS/project-name
 ```
-
-To work on a project, read and write files under `/workspace/extra/TARS/project-name/`.
