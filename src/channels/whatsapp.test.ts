@@ -29,10 +29,8 @@ vi.mock('../db.js', () => ({
 
 // Mock transcription
 vi.mock('../transcription.js', () => ({
-  isVoiceMessage: vi.fn((msg: any) => msg.message?.audioMessage?.ptt === true),
-  transcribeAudioMessage: vi
-    .fn()
-    .mockResolvedValue('Hello this is a voice message'),
+  transcribeAudio: vi.fn().mockResolvedValue('Hello this is a voice message'),
+  TRANSCRIPTION_UNAVAILABLE: '[Voice Message - transcription unavailable]',
 }));
 
 // Mock fs
@@ -95,6 +93,7 @@ vi.mock('@whiskeysockets/baileys', () => {
     fetchLatestWaWebVersion: vi
       .fn()
       .mockResolvedValue({ version: [2, 3000, 0] }),
+    downloadMediaMessage: vi.fn().mockResolvedValue(Buffer.from('fake-audio')),
     normalizeMessageContent: vi.fn((content: unknown) => content),
     makeCacheableSignalKeyStore: vi.fn((keys: unknown) => keys),
     useMultiFileAuthState: vi.fn().mockResolvedValue({
@@ -109,7 +108,7 @@ vi.mock('@whiskeysockets/baileys', () => {
 
 import { WhatsAppChannel, WhatsAppChannelOpts } from './whatsapp.js';
 import { getLastGroupSync, updateChatName, setLastGroupSync } from '../db.js';
-import { transcribeAudioMessage } from '../transcription.js';
+import { transcribeAudio } from '../transcription.js';
 
 // --- Test helpers ---
 
@@ -535,7 +534,7 @@ describe('WhatsAppChannel', () => {
         },
       ]);
 
-      expect(transcribeAudioMessage).toHaveBeenCalled();
+      expect(transcribeAudio).toHaveBeenCalled();
       expect(opts.onMessage).toHaveBeenCalledTimes(1);
       expect(opts.onMessage).toHaveBeenCalledWith(
         'registered@g.us',
@@ -546,7 +545,7 @@ describe('WhatsAppChannel', () => {
     });
 
     it('falls back when transcription returns null', async () => {
-      vi.mocked(transcribeAudioMessage).mockResolvedValueOnce(null);
+      vi.mocked(transcribeAudio).mockResolvedValueOnce('[Voice Message - transcription unavailable]');
 
       const opts = createTestOpts();
       const channel = new WhatsAppChannel(opts);
@@ -579,8 +578,8 @@ describe('WhatsAppChannel', () => {
     });
 
     it('falls back when transcription throws', async () => {
-      vi.mocked(transcribeAudioMessage).mockRejectedValueOnce(
-        new Error('API error'),
+      vi.mocked(transcribeAudio).mockRejectedValueOnce(
+        new Error('whisper error'),
       );
 
       const opts = createTestOpts();
@@ -608,7 +607,7 @@ describe('WhatsAppChannel', () => {
       expect(opts.onMessage).toHaveBeenCalledWith(
         'registered@g.us',
         expect.objectContaining({
-          content: '[Voice Message - transcription failed]',
+          content: '[Voice Message - transcription unavailable]',
         }),
       );
     });

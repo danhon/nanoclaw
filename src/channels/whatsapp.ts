@@ -5,7 +5,9 @@ import path from 'path';
 import makeWASocket, {
   Browsers,
   DisconnectReason,
+  WAMessage,
   WASocket,
+  downloadMediaMessage,
   fetchLatestWaWebVersion,
   makeCacheableSignalKeyStore,
   useMultiFileAuthState,
@@ -18,7 +20,7 @@ import {
 } from '../config.js';
 import { getLastGroupSync, setLastGroupSync, updateChatName } from '../db.js';
 import { logger } from '../logger.js';
-import { isVoiceMessage, transcribeAudioMessage } from '../transcription.js';
+import { transcribeAudio, TRANSCRIPTION_UNAVAILABLE } from '../transcription.js';
 import {
   Channel,
   OnInboundMessage,
@@ -204,9 +206,11 @@ export class WhatsAppChannel implements Channel {
             msg.message?.videoMessage?.caption ||
             '';
 
+          const isVoice = msg.message?.audioMessage?.ptt === true;
+
           // Skip protocol messages with no text content (encryption keys, read receipts, etc.)
           // but allow voice messages through for transcription
-          if (!content && !isVoiceMessage(msg)) continue;
+          if (!content && !isVoice) continue;
 
           const sender = msg.key.participant || msg.key.remoteJid || '';
           const senderName = msg.pushName || sender.split('@')[0];
@@ -222,21 +226,29 @@ export class WhatsAppChannel implements Channel {
 
           // Transcribe voice messages before storing
           let finalContent = content;
-          if (isVoiceMessage(msg)) {
+          if (isVoice) {
             try {
-              const transcript = await transcribeAudioMessage(msg, this.sock);
-              if (transcript) {
-                finalContent = `[Voice: ${transcript}]`;
+              const buffer = (await downloadMediaMessage(
+                msg,
+                'buffer',
+                {},
+                { logger: console as any, reuploadRequest: this.sock.updateMediaMessage },
+              )) as Buffer;
+              if (buffer?.length) {
+                const transcript = await transcribeAudio(buffer);
+                finalContent = transcript === TRANSCRIPTION_UNAVAILABLE
+                  ? TRANSCRIPTION_UNAVAILABLE
+                  : `[Voice: ${transcript}]`;
                 logger.info(
                   { chatJid, length: transcript.length },
                   'Transcribed voice message',
                 );
               } else {
-                finalContent = '[Voice Message - transcription unavailable]';
+                finalContent = TRANSCRIPTION_UNAVAILABLE;
               }
             } catch (err) {
               logger.error({ err }, 'Voice transcription error');
-              finalContent = '[Voice Message - transcription failed]';
+              finalContent = TRANSCRIPTION_UNAVAILABLE;
             }
           }
 
