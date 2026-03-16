@@ -409,7 +409,8 @@ async function runQuery(
         'NotebookEdit',
         'mcp__nanoclaw__*',
         'mcp__ollama__*',
-        'mcp__jmap__*'
+        'mcp__jmap__*',
+        'mcp__gmail__*',
       ],
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
@@ -433,9 +434,12 @@ async function runQuery(
           command: 'node',
           args: [path.join(path.dirname(mcpServerPath), 'jmap-mcp-stdio.js')],
           env: {
-            // JMAP_PROXY_URL is injected by container-runner.ts; proxy handles auth on host
             JMAP_PROXY_URL: process.env.JMAP_PROXY_URL || '',
           },
+        },
+        gmail: {
+          command: 'npx',
+          args: ['-y', '@gongrzhe/server-gmail-autoauth-mcp'],
         },
       },
       hooks: {
