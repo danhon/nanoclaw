@@ -56,6 +56,15 @@ When you learn something important:
 - Split files larger than 500 lines into folders
 - Keep an index in your memory for the files you create
 
+## Email Accounts
+
+Dan has two email accounts:
+
+- **Personal email** — Fastmail, accessed via `mcp__jmap__*` tools
+- **Work email** — Gmail (Google Workspace), accessed via `mcp__gmail__*` tools
+
+When Dan refers to "my email" without specifying, ask which account. When context makes it clear (e.g. a work meeting invite, a personal newsletter), use the right one without asking.
+
 ## Transcribing Audio
 
 To transcribe an audio file (any format: m4a, ogg, mp3, wav, etc.), POST it to the host transcription proxy — do NOT try to run whisper-cli or ffmpeg directly (they are not in the container):
