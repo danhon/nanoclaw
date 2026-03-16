@@ -20,6 +20,7 @@ function fetchJson(
   method: string,
   token: string,
   body?: Buffer,
+  maxRedirects = 5,
 ): Promise<{ status: number; data: Buffer }> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
@@ -38,6 +39,21 @@ function fetchJson(
         headers,
       },
       (res) => {
+        // Follow redirects (Fastmail's /.well-known/jmap returns 302)
+        if (
+          res.statusCode &&
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location &&
+          maxRedirects > 0
+        ) {
+          res.resume(); // Drain the response
+          const redirectUrl = new URL(res.headers.location, url).toString();
+          fetchJson(redirectUrl, method, token, body, maxRedirects - 1)
+            .then(resolve)
+            .catch(reject);
+          return;
+        }
         const chunks: Buffer[] = [];
         res.on('data', (c) => chunks.push(c));
         res.on('end', () =>
@@ -59,7 +75,9 @@ export function startJmapProxy(
   const token = secrets.FASTMAIL_API_TOKEN || '';
 
   if (!token) {
-    logger.warn('JMAP proxy: FASTMAIL_API_TOKEN not set — JMAP tools will return errors');
+    logger.warn(
+      'JMAP proxy: FASTMAIL_API_TOKEN not set — JMAP tools will return errors',
+    );
   }
 
   // Cache the real Fastmail API URL from the session endpoint
