@@ -196,6 +196,17 @@ function buildVolumeMounts(
     }
   }
 
+  // Session files — read-only mount so the 'thinking' skill can report usage stats
+  // across all groups without needing API calls.
+  const sessionsDir = path.join(DATA_DIR, 'sessions');
+  if (fs.existsSync(sessionsDir)) {
+    mounts.push({
+      hostPath: sessionsDir,
+      containerPath: '/workspace/sessions',
+      readonly: true,
+    });
+  }
+
   // Per-group IPC namespace: each group gets its own IPC directory
   // This prevents cross-group privilege escalation via IPC
   const groupIpcDir = resolveGroupIpcPath(group.folder);

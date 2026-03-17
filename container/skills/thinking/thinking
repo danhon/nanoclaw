@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""
+thinking — report Claude/Ollama usage stats for last 1h and 24h.
+
+Scans session JSONL files. No network calls, no API calls.
+Output: two plain-text lines, one per time window.
+"""
+import json, os, time
+from datetime import datetime, timezone
+from pathlib import Path
+
+SESSIONS_DIR = Path('/workspace/sessions')
+FALLBACK_DIR = Path('/home/node/.claude/projects')
+NOW = time.time()
+WINDOWS = [('1h', 3600), ('24h', 86400)]
+
+
+def iso_to_ts(s):
+    try:
+        return datetime.fromisoformat(s.replace('Z', '+00:00')).timestamp()
+    except Exception:
+        return None
+
+
+def scan():
+    root = SESSIONS_DIR if SESSIONS_DIR.exists() else FALLBACK_DIR
+    jsonl_files = list(root.rglob('*.jsonl'))
+
+    # claude_invocations: list of timestamps (queue-operation dequeue = one Claude session)
+    # ollama_calls: list of (timestamp, is_user_initiated)
+    claude_inv = []
+    ollama_calls = []
+
+    for path in jsonl_files:
+        try:
+            entries = []
+            by_uuid = {}
+            with open(path, errors='replace') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        e = json.loads(line)
+                    except Exception:
+                        continue
+                    entries.append(e)
+                    uid = e.get('uuid')
+                    if uid:
+                        by_uuid[uid] = e
+
+            for e in entries:
+                ts = iso_to_ts(e.get('timestamp', ''))
+                if ts is None:
+                    continue
+
+                # Claude invocation: each dequeue = one container processing batch
+                if e.get('type') == 'queue-operation' and e.get('operation') == 'dequeue':
+                    claude_inv.append(ts)
+                    continue
+
+                # Ollama tool use: inside assistant messages
+                msg = e.get('message', {})
+                if msg.get('role') != 'assistant':
+                    continue
+                content = msg.get('content', [])
+                if not isinstance(content, list):
+                    continue
+                for block in content:
+                    if not isinstance(block, dict):
+                        continue
+                    if block.get('name') != 'mcp__ollama__ollama_generate':
+                        continue
+
+                    # Walk parent chain to find if user mentioned "ollama"
+                    is_user_initiated = False
+                    cursor = e
+                    for _ in range(30):
+                        parent_id = cursor.get('parentUuid')
+                        if not parent_id:
+                            break
+                        parent = by_uuid.get(parent_id)
+                        if not parent:
+                            break
+                        pmsg = parent.get('message', {})
+                        if pmsg.get('role') == 'user':
+                            pcontent = pmsg.get('content', [])
+                            text = ''
+                            if isinstance(pcontent, str):
+                                text = pcontent
+                            elif isinstance(pcontent, list):
+                                for pb in pcontent:
+                                    if isinstance(pb, dict) and pb.get('type') == 'text':
+                                        text += pb.get('text', '')
+                            if 'ollama' in text.lower():
+                                is_user_initiated = True
+                            break
+                        cursor = parent
+
+                    ollama_calls.append((ts, is_user_initiated))
+
+        except Exception:
+            continue
+
+    return claude_inv, ollama_calls
+
+
+def report(label, secs, claude_inv, ollama_calls):
+    cutoff = NOW - secs
+    cl = sum(1 for t in claude_inv if t >= cutoff)
+    ol = [(t, u) for t, u in ollama_calls if t >= cutoff]
+    ol_you = sum(1 for _, u in ol if u)
+    ol_auto = sum(1 for _, u in ol if not u)
+    return f"{label}: Claude {cl}x | Ollama {len(ol)}x (you asked: {ol_you}, auto: {ol_auto})"
+
+
+claude_inv, ollama_calls = scan()
+for label, secs in WINDOWS:
+    print(report(label, secs, claude_inv, ollama_calls))

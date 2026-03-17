@@ -53,6 +53,10 @@ RUN npm run build
 COPY skills/pdf-reader/pdf-reader /usr/local/bin/pdf-reader
 RUN chmod +x /usr/local/bin/pdf-reader
 
+# Install thinking CLI
+COPY skills/thinking/thinking /usr/local/bin/thinking
+RUN chmod +x /usr/local/bin/thinking
+
 # Create workspace directories
 RUN mkdir -p /workspace/group /workspace/global /workspace/extra /workspace/ipc/messages /workspace/ipc/tasks /workspace/ipc/input
 
