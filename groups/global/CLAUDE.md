@@ -65,6 +65,19 @@ Dan has two email accounts:
 
 When Dan refers to "my email" without specifying, ask which account. When context makes it clear (e.g. a work meeting invite, a personal newsletter), use the right one without asking.
 
+## Google Calendar
+
+Dan has two Google Calendar accounts:
+
+- **Personal calendar** — `danhon@gmail.com`, accessed via `mcp__calendar-personal__*` tools
+- **Work calendar** — `dan@verylittlegravitas.com`, accessed via `mcp__calendar-work__*` tools
+
+Each account has multiple calendars. Use `list-calendars` to discover them before listing events.
+
+When Dan refers to "my calendar" without specifying, use context to pick the right account (personal for personal plans, work for meetings/work events). If genuinely ambiguous, check both.
+
+Available tools (read-only): `list-calendars`, `list-events`, `search-events`, `get-event`, `get-freebusy`.
+
 ## Transcribing Audio
 
 To transcribe an audio file (any format: m4a, ogg, mp3, wav, etc.), POST it to the host transcription proxy — do NOT try to run whisper-cli or ffmpeg directly (they are not in the container):

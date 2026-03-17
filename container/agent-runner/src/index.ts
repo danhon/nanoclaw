@@ -411,6 +411,8 @@ async function runQuery(
         'mcp__ollama__*',
         'mcp__jmap__*',
         'mcp__gmail__*',
+        'mcp__calendar-personal__*',
+        'mcp__calendar-work__*',
       ],
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
@@ -440,6 +442,25 @@ async function runQuery(
         gmail: {
           command: 'npx',
           args: ['-y', '@gongrzhe/server-gmail-autoauth-mcp'],
+        },
+        'calendar-personal': {
+          command: 'npx',
+          args: ['-y', '@cocal/google-calendar-mcp'],
+          env: {
+            GOOGLE_OAUTH_CREDENTIALS: '/home/node/.calendar-mcp/personal/gcp-oauth.keys.json',
+            GOOGLE_CALENDAR_MCP_TOKEN_PATH: '/home/node/.calendar-mcp/personal/tokens.json',
+            // Read-only tools. To enable write access, add: create-event,update-event,delete-event,respond-to-event
+            ENABLED_TOOLS: 'list-calendars,list-events,search-events,get-event,get-freebusy,get-current-time',
+          },
+        },
+        'calendar-work': {
+          command: 'npx',
+          args: ['-y', '@cocal/google-calendar-mcp'],
+          env: {
+            GOOGLE_OAUTH_CREDENTIALS: '/home/node/.calendar-mcp/work/gcp-oauth.keys.json',
+            GOOGLE_CALENDAR_MCP_TOKEN_PATH: '/home/node/.calendar-mcp/work/tokens.json',
+            ENABLED_TOOLS: 'list-calendars,list-events,search-events,get-event,get-freebusy,get-current-time',
+          },
         },
       },
       hooks: {
